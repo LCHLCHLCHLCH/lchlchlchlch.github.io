@@ -3,17 +3,21 @@
 <head>
   <meta charset="utf-8">
   
-  <title>LCH</title>
+  <title>使用vscode+armgcc+openocd构建stm32开发环境 | LCH</title>
 
   <!-- keywords -->
   
 
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="LCH">
-<meta property="og:url" content="http://lchlchlchlch.github.io/index.html">
+  <meta name="description" content="前言本文介绍了如何搭建用于stm32开发的环境。本环境在ubuntu下测试通过，理论上经过简单修改就可以用于其他linux发行版。注意该方法的某些步骤在Windows下和linux有一定差别。建议windows用户使用keil。 本文的目标在vscode中实现代码补全，使用vscode的task功能实现（较为）简便的烧录。 准备工作安装必要工具 1sudo apt install gcc-arm-">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用vscode+armgcc+openocd构建stm32开发环境">
+<meta property="og:url" content="http://lchlchlchlch.github.io/2024/06/20/%E4%BD%BF%E7%94%A8vscode-armgcc-openocd%E6%9E%84%E5%BB%BAstm32%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83/index.html">
 <meta property="og:site_name" content="LCH">
+<meta property="og:description" content="前言本文介绍了如何搭建用于stm32开发的环境。本环境在ubuntu下测试通过，理论上经过简单修改就可以用于其他linux发行版。注意该方法的某些步骤在Windows下和linux有一定差别。建议windows用户使用keil。 本文的目标在vscode中实现代码补全，使用vscode的task功能实现（较为）简便的烧录。 准备工作安装必要工具 1sudo apt install gcc-arm-">
 <meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2024-06-20T12:52:45.000Z">
+<meta property="article:modified_time" content="2024-06-20T12:54:39.723Z">
 <meta property="article:author" content="LCH">
 <meta name="twitter:card" content="summary">
   
@@ -154,72 +158,7 @@
 		</header>				
 	</div>
 </nav>
-      <div class="body-wrap">
-  
-    <article id="post-Verilog实现在某个信号的上升沿激活另一个信号一段时间" class="article article-type-post" itemscope itemprop="blogPost">
-  
-    <div class="article-meta">
-      <a href="/2024/06/20/Verilog%E5%AE%9E%E7%8E%B0%E5%9C%A8%E6%9F%90%E4%B8%AA%E4%BF%A1%E5%8F%B7%E7%9A%84%E4%B8%8A%E5%8D%87%E6%B2%BF%E6%BF%80%E6%B4%BB%E5%8F%A6%E4%B8%80%E4%B8%AA%E4%BF%A1%E5%8F%B7%E4%B8%80%E6%AE%B5%E6%97%B6%E9%97%B4/" class="article-date">
-  	<time datetime="2024-06-20T12:58:23.000Z" itemprop="datePublished">2024-06-20</time>
-</a>
-    </div>
-  
-  <div class="article-inner">
-    
-      <input type="hidden" class="isFancy" />
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2024/06/20/Verilog%E5%AE%9E%E7%8E%B0%E5%9C%A8%E6%9F%90%E4%B8%AA%E4%BF%A1%E5%8F%B7%E7%9A%84%E4%B8%8A%E5%8D%87%E6%B2%BF%E6%BF%80%E6%B4%BB%E5%8F%A6%E4%B8%80%E4%B8%AA%E4%BF%A1%E5%8F%B7%E4%B8%80%E6%AE%B5%E6%97%B6%E9%97%B4/">
-        Verilog实现在某个信号的上升沿激活另一个信号一段时间
-        
-      </a>
-    </h1>
-  
-
-      </header>
-      
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h4 id="今天在写Verilog代码的时候遇到了一个棘手的问题。"><a href="#今天在写Verilog代码的时候遇到了一个棘手的问题。" class="headerlink" title="今天在写Verilog代码的时候遇到了一个棘手的问题。"></a>今天在写Verilog代码的时候遇到了一个棘手的问题。</h4><p>我想要实现的目标是：在一个sensor信号上升时，激活一个复位信号rst_light。但是又不能让它一直保持激活状态，必须让它在激活一小段时间后再变为未激活的状态。波形图大概是长这样：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">                         __________________________</span><br><span class="line">sensor     _____________|  </span><br><span class="line">                          __</span><br><span class="line">rst_light  ______________|  |_______________________</span><br></pre></td></tr></table></figure>
-<p>尝试上网查询，但是没有合适的解决方法<br>又尝试去问AI，但是AI给的答复，会让rst_light在sensor激活后一直保持激活的状态。从而使得它对应的模块无法正常工作。总之就是没有解决问题。</p>
-<p>后来我想到了用这样的方式解决：</p>
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">always</span> @(<span class="keyword">posedge</span> sensor) rst_light &lt;= <span class="number">1&#x27;b1</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">always</span> @(<span class="keyword">posedge</span> sys_clk)</span><br><span class="line">    <span class="keyword">if</span>(rst_light == <span class="number">1&#x27;b1</span>)</span><br><span class="line">        rst_light &lt;= <span class="number">1&#x27;b0</span>;</span><br></pre></td></tr></table></figure>
-<p>这种方式从逻辑上行得通，但是出现了两个always语句一起对rst_light赋值的问题。综合的时候会报错。</p>
-<p>经过我一天的思考，终于找到了这个方法：</p>
-<figure class="highlight verilog"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">reg</span> sensor_mid;</span><br><span class="line"></span><br><span class="line"><span class="keyword">always</span> @(<span class="keyword">posedge</span> sys_clk) sensor_mid &lt;= ~sensor;</span><br><span class="line"><span class="keyword">assign</span> rst_light = sensor_mid &amp;&amp; sensor;</span><br></pre></td></tr></table></figure>
-<p>这个方法使用了一个中间变量sensor_mid，它是sensor延迟再取反得到的。这样就能使得sensor和sensor_mid中间产生一点空隙，而这点空隙正好能为rst_clk信号提供一小段存在的时间。从而解决了问题。</p>
-
-      
-    </div>
-    
-    <div class="article-info article-info-index">
-      
-      
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-      
-    
-  </div>
-  
-</article>
-
-
-
-
-
-
-
-  
-    <article id="post-使用vscode-armgcc-openocd构建stm32开发环境" class="article article-type-post" itemscope itemprop="blogPost">
+      <div class="body-wrap"><article id="post-使用vscode-armgcc-openocd构建stm32开发环境" class="article article-type-post" itemscope itemprop="blogPost">
   
     <div class="article-meta">
       <a href="/2024/06/20/%E4%BD%BF%E7%94%A8vscode-armgcc-openocd%E6%9E%84%E5%BB%BAstm32%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83/" class="article-date">
@@ -235,15 +174,21 @@
       <header class="article-header">
         
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/2024/06/20/%E4%BD%BF%E7%94%A8vscode-armgcc-openocd%E6%9E%84%E5%BB%BAstm32%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83/">
-        使用vscode+armgcc+openocd构建stm32开发环境
-        
-      </a>
+    <h1 class="article-title" itemprop="name">
+      使用vscode+armgcc+openocd构建stm32开发环境
+      
     </h1>
   
 
       </header>
+      
+      <div class="article-info article-info-post">
+        
+        
+
+        
+        <div class="clearfix"></div>
+      </div>
       
     
     <div class="article-entry" itemprop="articleBody">
@@ -299,17 +244,23 @@
       
     </div>
     
-    <div class="article-info article-info-index">
-      
-      
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-      
-    
   </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2024/06/20/Verilog%E5%AE%9E%E7%8E%B0%E5%9C%A8%E6%9F%90%E4%B8%AA%E4%BF%A1%E5%8F%B7%E7%9A%84%E4%B8%8A%E5%8D%87%E6%B2%BF%E6%BF%80%E6%B4%BB%E5%8F%A6%E4%B8%80%E4%B8%AA%E4%BF%A1%E5%8F%B7%E4%B8%80%E6%AE%B5%E6%97%B6%E9%97%B4/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">&lt;</strong>
+      <div class="article-nav-title">
+        
+          Verilog实现在某个信号的上升沿激活另一个信号一段时间
+        
+      </div>
+    </a>
+  
+  
+</nav>
+
   
 </article>
 
@@ -318,9 +269,6 @@
 
 
 
-
-  
-  
 </div>
       <footer id="footer">
   <div class="outer">
@@ -346,8 +294,8 @@
 		fancybox: true,
 		mathjax: false,
 		animate: true,
-		isHome: true,
-		isPost: false,
+		isHome: false,
+		isPost: true,
 		isArchive: false,
 		isTag: false,
 		isCategory: false,
